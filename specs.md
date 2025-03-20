@@ -100,3 +100,5 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
 **8. Zaključak**
 Ovaj projekt prikazuje kako kombinacija FaunaDB i CockroachDB omogućava skalabilnost, fleksibilnost i sigurnost u e-commerce sustavu. FaunaDB nudi brzu i prilagodljivu pohranu proizvoda, dok CockroachDB osigurava konzistentne i pouzdane transakcije za narudžbe i plaćanja. Projekt je zamišljen kao demonstracija distribuiranih baza podataka u akademske svrhe.
 
+Budući rezultati
+
