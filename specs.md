@@ -4,18 +4,12 @@
 Ovaj projekt je akademska implementacija e-commerce platforme koja koristi dvije baze podataka:
 - **FaunaDB** za pohranu kataloga proizvoda s fleksibilnim atributima.
 - **CockroachDB** za upravljanje narudžbama i plaćanjima uz osiguranje ACID svojstava i distribuiranog SQL-a.
+-**PostgreSQL** za upravljanje narudžbama i plaćanjima uz osiguranje ACID svojstava i snažne SQL upite.
 
 Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specijalizirane za različite vrste podataka i transakcijskih zahtjeva.
 
 ---
 
-**2. Tehnološki stack**
-- **Backend:** Node.js (Express) ili Python (FastAPI/Django)
-- **Frontend:** React.js / Vue.js
-- **Baza podataka:** FaunaDB, CockroachDB
-- **Autentifikacija:** JWT ili OAuth 2.0
-- **Plaćanja:** Simulirani sustav (npr. Stripe testni API)
-- **Deploy:** Docker, Kubernetes (opcijski za distribuirano testiranje)
 
 ---
 
@@ -26,7 +20,23 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
 - **Košarica** (CockroachDB)
   - Pohrana aktivnih košarica po korisnicima
 - **Narudžbe i plaćanja** (CockroachDB)
+  -  Status narudžbe: „Na čekanju”, „Obrađeno”, „Poslano”, „Otkazano”
   - ACID transakcije za kreiranje narudžbi i obradu plaćanja
+
+  **ideja - osnovne tablice**
+    Korisnici: Tablica pohranjuje osnovne podatke o korisnicima, uključujući jedinstveni identifikator, ime, prezime, email adresu, lozinku, ulogu (kupac ili administrator) te datum registracije.
+
+    Proizvodi: Ova tablica sadrži informacije o proizvodima kao što su jedinstveni identifikator, naziv, opis, cijena, količina na skladištu, kategorija proizvoda, fleksibilni atributi (npr. boja, veličina) i datum dodavanja proizvoda u sustav.
+
+    Košarice: Tablica pohranjuje podatke o aktivnim košaricama korisnika, uključujući jedinstveni identifikator košarice, povezanost s korisnikom, datum kreiranja i status košarice (npr. "aktivna" ili "napuštena").
+
+    Stavke košarice: Ovdje se pohranjuju proizvodi unutar košarica. Svaka stavka uključuje jedinstveni identifikator, povezanost s košaricom, proizvodom, količinu proizvoda i cijenu proizvoda u trenutku dodavanja u košaricu.
+
+    Narudžbe: Tablica pohranjuje informacije o narudžbama korisnika, uključujući jedinstveni identifikator narudžbe, korisnika koji je naručio, ukupnu cijenu narudžbe, status narudžbe (npr. "na čekanju" ili "obrađeno") i datum narudžbe.
+
+    Stavke narudžbe: Ovdje se pohranjuju proizvodi unutar narudžbi, sa svim detaljima poput jedinstvenog identifikatora, povezivanja s narudžbom, proizvodima, količinom proizvoda i cijenom proizvoda u trenutku narudžbe.
+
+    Plaćanja: Tablica pohranjuje informacije o plaćanjima koja su izvršena za narudžbe, uključujući iznos plaćanja, datum plaćanja, status plaćanja (npr. "u obradi", "plaćeno", "neuspješno") i povezivanje s narudžbom.
 
 ---
 
@@ -34,11 +44,6 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
 - **Administratorski panel**
   - Dodavanje, izmjena i brisanje proizvoda
   - Pregled narudžbi
-- **Korisničko sučelje**
-  - Registracija i prijava
-  - Pregled i pretraživanje proizvoda
-  - Dodavanje proizvoda u košaricu
-  - Plaćanje i potvrda narudžbe
 - **Integracija baza podataka**
   - API koji dohvaća proizvode iz FaunaDB
   - API za upravljanje narudžbama i plaćanjima u CockroachDB
@@ -60,8 +65,25 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
     "kategorija": "Elektronika"
   }
   ```
+--
+Gdje koristiti FaunaDB tj. NoSQL?
+Primjer:
 
-- **CockroachDB (SQL, relacijski model)**
+Kada korisnik dodaje novi proizvod u katalog, svi atributi proizvoda mogu biti pohranjeni kao JSON dokument u FaunaDB-u.
+FaunaDB omogućava jednostavnu pohranu dokumenata, gdje atributi mogu biti dodani ili uklonjeni bez potrebe za promjenama u shemi baze podataka.
+
+FaunaDB može biti korisna za pohranu recenzija proizvoda. Recenzije su često nestrukturirani podaci (npr. tekst, ocjene) koji se često mijenjaju, a FaunaDB nudi fleksibilnost u pohrani tih podataka bez potrebe za rigidnom shemom.
+
+Svaka recenzija može biti pohranjena kao dokument, koji uključuje: ID korisnika koji je ostavio recenziju, ID proizvoda ,Ocjenu (npr. 1-5 zvjezdica), Tekstualnu recenziju, Datum objave
+
+FaunaDB može pohranjivati kuponske kodove i promocije. Ovaj tip podataka često se mijenja, a FaunaDB omogućuje brzo dodavanje novih kupona ili promocija bez potrebe za složenim migracijama baze podataka.
+
+Kuponi mogu biti pohranjeni kao dokumenti s atributima poput:Kuponski kod, Popust (npr. 10% ili određeni iznos)
+Datum početka i isteka kupona, Kategorije proizvoda za koje je kupon valjan
+
+
+--
+- **CockroachDB ili PostgreSQL (SQL, relacijski model)**
   ```sql
   CREATE TABLE narudzbe (
     id UUID PRIMARY KEY,
@@ -84,7 +106,7 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
 
 **6. API specifikacija**
 - **GET /proizvodi** – Dohvati sve proizvode iz FaunaDB
-- **POST /narudzba** – Kreiraj novu narudžbu u CockroachDB
+- **POST /narudzba** – Kreiraj novu narudžbu u CockroachDB/PostgreSQL
 - **POST /placanje** – Obradi plaćanje (simulacija)
 - **GET /narudzbe/{id}** – Dohvati status narudžbe
 
@@ -93,12 +115,18 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
 **7. Testiranje**
 - Jedinično testiranje API-ja (Postman, Jest/PyTest)
 - Integracijsko testiranje baza podataka
-- Simulacije visokog opterećenja (JMeter, k6)
 
 ---
 
 **8. Zaključak**
 Ovaj projekt prikazuje kako kombinacija FaunaDB i CockroachDB omogućava skalabilnost, fleksibilnost i sigurnost u e-commerce sustavu. FaunaDB nudi brzu i prilagodljivu pohranu proizvoda, dok CockroachDB osigurava konzistentne i pouzdane transakcije za narudžbe i plaćanja. Projekt je zamišljen kao demonstracija distribuiranih baza podataka u akademske svrhe.
 
-Budući rezultati
 
+
+**9. Alternativne tehologije**
+Pošto CockroachDB nije baš učestala baza, **PostgreSQL** je odlična alternativa za CockroachDB, pogotovo ako  nije nužno potrebna distribuirana baza s automatskim skaliranjem. PostgreSQL podržava ACID transakcije, snažan SQL upitni jezik i JSONB tip podatka, što ga čini dobrim izborom za e-commerce sustave.
+PostgreSQL je jednostavniji za postavljanje i upravljanje, pogotovo u manjim projektima. Ima dugu povijest i široku zajednicu, pa je lakše pronaći rješenja za eventualne probleme.
+
+PostgreSQL je potpuno open-source i **besplatan** za korištenje bez ikakvih ograničenja.
+
+CockroachDB nudi besplatan plan, ali kod većih implementacija možeš naići na troškove licenci jer se komercijalna verzija naplaćuje za skalabilne, visoko distribuirane sustave.
