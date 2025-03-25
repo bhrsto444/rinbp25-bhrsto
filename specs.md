@@ -24,6 +24,7 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
   - ACID transakcije za kreiranje narudžbi i obradu plaćanja
 
   **ideja - osnovne tablice**
+
     Korisnici: Tablica pohranjuje osnovne podatke o korisnicima, uključujući jedinstveni identifikator, ime, prezime, email adresu, lozinku, ulogu (kupac ili administrator) te datum registracije.
 
     Proizvodi: Ova tablica sadrži informacije o proizvodima kao što su jedinstveni identifikator, naziv, opis, cijena, količina na skladištu, kategorija proizvoda, fleksibilni atributi (npr. boja, veličina) i datum dodavanja proizvoda u sustav.
@@ -67,6 +68,7 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
   ```
 --
 Gdje koristiti FaunaDB tj. NoSQL?
+
 Primjer:
 
 Kada korisnik dodaje novi proizvod u katalog, svi atributi proizvoda mogu biti pohranjeni kao JSON dokument u FaunaDB-u.
