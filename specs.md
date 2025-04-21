@@ -15,72 +15,29 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
 **3. Arhitektura sustava**
   1. Korisnici (users)
 
-    Atributi: first_name, last_name, email, password, role, created_at
-
   2. Proizvodi (products)
-
-    Atributi: naziv, opis, cijena, slika_url, na_stanju, kategorija_id
 
   3. Kategorije proizvoda (kategorije_proizvoda)
 
-    Atributi: naziv, opis
-
-    4. Atributi proizvoda (atributi_proizvoda)
-
-    Atributi: naziv, tip
+  4. Atributi proizvoda (atributi_proizvoda)
 
   5. Vrijednosti atributa (vrijednosti_atributa)
 
-    Atributi: vrijednost
-
   6. Košarice (kosarice)
 
-    Atributi: aktivna, kreirana
-
-    Strani ključ:
-
-    korisnik_id → users.id
-
-    U odnosu s:
-
-    stavke_kosarice (1:N) preko kosarica_id
-
   7. Stavke košarice (stavke_kosarice)
-  Primarni ključ: id
-
-  Atributi: kolicina
-
-  Strani ključevi:
-
-  kosarica_id → kosarice.id
-
-  proizvod_id → products.id
-
+  
   8. Narudžbe (narudzbe)
 
-  Atributi: status, datum
-
   9. Stavke narudžbe (stavke_narudzbe)
-
-    Atributi: kolicina, cijena
-
     
   10. Plaćanja (placanja)
 
-    Atributi: status, iznos, datum
-
-
   11. Povrati (povrati)
-
-    Atributi: razlog, status, datum
 
   12. Lista želja (wishlist)
 
-    Opis: Veza M:N između korisnika i proizvoda
-
   13. Recenzije (recenzije)
-
-    Atributi: tekst, ocjena, datum
 
 
   **ideja - osnovne tablice**
