@@ -110,7 +110,9 @@ Svaka recenzija može biti pohranjena kao dokument, koji uključuje: ID korisnik
 --Kuponi mogu biti pohranjeni kao dokumenti s atributima poput:Kuponski kod, Popust (npr. 10% ili određeni iznos)
 Datum početka i isteka kupona, Kategorije proizvoda za koje je kupon valjan
 
---"Dinamička pitanja/odgovori za proizvode" (Q&A sekcija)--možda
+Dinamička pitanja/odgovori za proizvod (Q&A sekcija)--možda
+
+
 --
 - PostgreSQL (SQL, relacijski model)**
   ```sql
