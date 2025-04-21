@@ -2,8 +2,7 @@
 
 **1. Opis projekta**
 Ovaj projekt je akademska implementacija e-commerce platforme koja koristi dvije baze podataka:
-- **FaunaDB** za pohranu kataloga proizvoda s fleksibilnim atributima.
-- **CockroachDB** za upravljanje narudžbama i plaćanjima uz osiguranje ACID svojstava i distribuiranog SQL-a.
+- **MongoDB** za pohranu kataloga proizvoda s fleksibilnim atributima.
 -**PostgreSQL** za upravljanje narudžbama i plaćanjima uz osiguranje ACID svojstava i snažne SQL upite.
 
 Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specijalizirane za različite vrste podataka i transakcijskih zahtjeva.
@@ -14,14 +13,75 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
 ---
 
 **3. Arhitektura sustava**
-- **Korisnici** (kupci i administratori)
-- **Katalog proizvoda** (FaunaDB)
-  - Proizvodi imaju fleksibilne atribute (npr. veličina, boja, marka, model)
-- **Košarica** (CockroachDB)
-  - Pohrana aktivnih košarica po korisnicima
-- **Narudžbe i plaćanja** (CockroachDB)
-  -  Status narudžbe: „Na čekanju”, „Obrađeno”, „Poslano”, „Otkazano”
-  - ACID transakcije za kreiranje narudžbi i obradu plaćanja
+  1. Korisnici (users)
+
+    Atributi: first_name, last_name, email, password, role, created_at
+
+  2. Proizvodi (products)
+
+    Atributi: naziv, opis, cijena, slika_url, na_stanju, kategorija_id
+
+  3. Kategorije proizvoda (kategorije_proizvoda)
+
+    Atributi: naziv, opis
+
+    4. Atributi proizvoda (atributi_proizvoda)
+
+    Atributi: naziv, tip
+
+  5. Vrijednosti atributa (vrijednosti_atributa)
+
+    Atributi: vrijednost
+
+  6. Košarice (kosarice)
+
+    Atributi: aktivna, kreirana
+
+    Strani ključ:
+
+    korisnik_id → users.id
+
+    U odnosu s:
+
+    stavke_kosarice (1:N) preko kosarica_id
+
+  7. Stavke košarice (stavke_kosarice)
+  Primarni ključ: id
+
+  Atributi: kolicina
+
+  Strani ključevi:
+
+  kosarica_id → kosarice.id
+
+  proizvod_id → products.id
+
+  8. Narudžbe (narudzbe)
+
+  Atributi: status, datum
+
+  9. Stavke narudžbe (stavke_narudzbe)
+
+    Atributi: kolicina, cijena
+
+    
+  10. Plaćanja (placanja)
+
+    Atributi: status, iznos, datum
+
+
+  11. Povrati (povrati)
+
+    Atributi: razlog, status, datum
+
+  12. Lista želja (wishlist)
+
+    Opis: Veza M:N između korisnika i proizvoda
+
+  13. Recenzije (recenzije)
+
+    Atributi: tekst, ocjena, datum
+
 
   **ideja - osnovne tablice**
 
@@ -46,13 +106,13 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
   - Dodavanje, izmjena i brisanje proizvoda
   - Pregled narudžbi
 - **Integracija baza podataka**
-  - API koji dohvaća proizvode iz FaunaDB
-  - API za upravljanje narudžbama i plaćanjima u CockroachDB
+  - API koji dohvaća proizvode iz MongoDB
+  - API za upravljanje narudžbama i plaćanjima u PostgreSQL
 
 ---
 
 **5. Model podataka**
-- **FaunaDB (NoSQL, JSON dokumenti)**
+- **MongoDBB (NoSQL, JSON dokumenti)**
   ```json
   {
     "id": "12345",
@@ -67,25 +127,35 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
   }
   ```
 --
-Gdje koristiti FaunaDB tj. NoSQL?
+***Gdje koristiti MongoDB tj. NoSQL?***
 
-Primjer:
 
-Kada korisnik dodaje novi proizvod u katalog, svi atributi proizvoda mogu biti pohranjeni kao JSON dokument u FaunaDB-u.
+Iako je većina ključnih funkcionalnosti e-commerce sustava (korisnici, narudžbe, plaćanja, košarice) implementirana korištenjem relacijske baze PostgreSQL, projekt uključuje i NoSQL pristup radi prikaza fleksibilnosti u pohrani nestrukturiranih podataka.
+
+Konkretno, MongoDB koristi se za pohranu manje kritičnih, ali korisnički relevantnih podataka, gdje nije potrebna stroga shema ili relacijska konzistencija. Time se pokazuje kako kombinacija relacijske i nestrukturirane baze može ponuditi skalabilno i fleksibilno rješenje.
+
+Primjeri korištenja NoSQL baze:
+
+--Povijest pregleda proizvoda po korisnicima – služi za preporuke i personalizaciju.
+ada korisnik dodaje novi proizvod u katalog, svi atributi proizvoda mogu biti pohranjeni kao JSON dokument u FaunaDB-u.
 FaunaDB omogućava jednostavnu pohranu dokumenata, gdje atributi mogu biti dodani ili uklonjeni bez potrebe za promjenama u shemi baze podataka.
 
-FaunaDB može biti korisna za pohranu recenzija proizvoda. Recenzije su često nestrukturirani podaci (npr. tekst, ocjene) koji se često mijenjaju, a FaunaDB nudi fleksibilnost u pohrani tih podataka bez potrebe za rigidnom shemom.
-
+--Recenzije i komentari korisnika – često sadrže različitu strukturu (npr. ocjena, tekst, slika).
+ongoDB može biti korisna za pohranu recenzija proizvoda. Recenzije su često nestrukturirani podaci (npr. tekst, ocjene) koji se često mijenjaju, a FaunaDB nudi fleksibilnost u pohrani tih podataka bez potrebe za rigidnom shemom.
 Svaka recenzija može biti pohranjena kao dokument, koji uključuje: ID korisnika koji je ostavio recenziju, ID proizvoda ,Ocjenu (npr. 1-5 zvjezdica), Tekstualnu recenziju, Datum objave
 
-FaunaDB može pohranjivati kuponske kodove i promocije. Ovaj tip podataka često se mijenja, a FaunaDB omogućuje brzo dodavanje novih kupona ili promocija bez potrebe za složenim migracijama baze podataka.
+--Dnevnik aktivnosti korisnika – bilježi događaje poput pretraživanja, klikova, prijava.
 
-Kuponi mogu biti pohranjeni kao dokumenti s atributima poput:Kuponski kod, Popust (npr. 10% ili određeni iznos)
+--Tagiranje i korisnički generirani sadržaj – korisnici mogu dodavati tagove koji se ne uklapaju u klasičnu relacijsku strukturu.
+
+--MongoDB može pohranjivati kuponske kodove i promocije. Ovaj tip podataka često se mijenja, a FaunaDB omogućuje brzo dodavanje novih kupona ili promocija bez potrebe za složenim migracijama baze podataka.
+
+--Kuponi mogu biti pohranjeni kao dokumenti s atributima poput:Kuponski kod, Popust (npr. 10% ili određeni iznos)
 Datum početka i isteka kupona, Kategorije proizvoda za koje je kupon valjan
 
-
+--"Dinamička pitanja/odgovori za proizvode" (Q&A sekcija)--možda
 --
-- **CockroachDB ili PostgreSQL (SQL, relacijski model)**
+- PostgreSQL (SQL, relacijski model)**
   ```sql
   CREATE TABLE narudzbe (
     id UUID PRIMARY KEY,
@@ -107,7 +177,7 @@ Datum početka i isteka kupona, Kategorije proizvoda za koje je kupon valjan
 ---
 
 **6. API specifikacija**
-- **GET /proizvodi** – Dohvati sve proizvode iz FaunaDB
+- **GET /proizvodi** – Dohvati sve proizvode 
 - **POST /narudzba** – Kreiraj novu narudžbu u CockroachDB/PostgreSQL
 - **POST /placanje** – Obradi plaćanje (simulacija)
 - **GET /narudzbe/{id}** – Dohvati status narudžbex
@@ -121,7 +191,7 @@ Datum početka i isteka kupona, Kategorije proizvoda za koje je kupon valjan
 ---
 
 **8. Zaključak**
-Ovaj projekt prikazuje kako kombinacija FaunaDB i CockroachDB omogućava skalabilnost, fleksibilnost i sigurnost u e-commerce sustavu. FaunaDB nudi brzu i prilagodljivu pohranu proizvoda, dok CockroachDB osigurava konzistentne i pouzdane transakcije za narudžbe i plaćanja. Projekt je zamišljen kao demonstracija distribuiranih baza podataka u akademske svrhe.
+Ovaj projekt prikazuje kako kombinacija PostgreSQL i MongoDB omogućava skalabilnost, fleksibilnost i sigurnost u e-commerce sustavu. FaunaDB nudi brzu i prilagodljivu pohranu proizvoda, dok CockroachDB osigurava konzistentne i pouzdane transakcije za narudžbe i plaćanja. Projekt je zamišljen kao demonstracija distribuiranih baza podataka u akademske svrhe.
 
 
 
