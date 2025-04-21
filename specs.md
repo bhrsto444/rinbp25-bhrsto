@@ -152,12 +152,3 @@ Dinamička pitanja/odgovori za proizvod (Q&A sekcija)--možda
 **8. Zaključak**
 Ovaj projekt prikazuje kako kombinacija PostgreSQL i MongoDB omogućava skalabilnost, fleksibilnost i sigurnost u e-commerce sustavu. FaunaDB nudi brzu i prilagodljivu pohranu proizvoda, dok CockroachDB osigurava konzistentne i pouzdane transakcije za narudžbe i plaćanja. Projekt je zamišljen kao demonstracija distribuiranih baza podataka u akademske svrhe.
 
-
-
-**9. Alternativne tehologije**
-Pošto CockroachDB nije baš učestala baza, **PostgreSQL** je odlična alternativa za CockroachDB, pogotovo ako  nije nužno potrebna distribuirana baza s automatskim skaliranjem. PostgreSQL podržava ACID transakcije, snažan SQL upitni jezik i JSONB tip podatka, što ga čini dobrim izborom za e-commerce sustave.
-PostgreSQL je jednostavniji za postavljanje i upravljanje, pogotovo u manjim projektima. Ima dugu povijest i široku zajednicu, pa je lakše pronaći rješenja za eventualne probleme.
-
-PostgreSQL je potpuno open-source i **besplatan** za korištenje bez ikakvih ograničenja.
-
-CockroachDB nudi besplatan plan, ali kod većih implementacija možeš naići na troškove licenci jer se komercijalna verzija naplaćuje za skalabilne, visoko distribuirane sustave.
