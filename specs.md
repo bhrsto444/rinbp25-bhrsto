@@ -110,13 +110,13 @@ Datum početka i isteka kupona, Kategorije proizvoda za koje je kupon valjan
 - **GET /proizvodi** – Dohvati sve proizvode iz FaunaDB
 - **POST /narudzba** – Kreiraj novu narudžbu u CockroachDB/PostgreSQL
 - **POST /placanje** – Obradi plaćanje (simulacija)
-- **GET /narudzbe/{id}** – Dohvati status narudžbe
+- **GET /narudzbe/{id}** – Dohvati status narudžbex
 
 ---
 
 **7. Testiranje**
 - Jedinično testiranje API-ja (Postman, Jest/PyTest)
-- Integracijsko testiranje baza podataka
+- Integracijsko testiranje baza podataka 
 
 ---
 
