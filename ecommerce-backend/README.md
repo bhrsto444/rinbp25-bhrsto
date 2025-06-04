@@ -18,7 +18,7 @@
   2. Proizvodi (products)
     Primarni ključ: id
 
-    Atributi: naziv, opis, cijena, slika_url, na_stanju, kategorija_id
+    Atributi: naziv, opis, cijena, na_stanju, kategorija_id
 
     U odnosu s:
 
@@ -162,3 +162,4 @@
     korisnik_id → users.id
 
     proizvod_id → products.id
+ 
