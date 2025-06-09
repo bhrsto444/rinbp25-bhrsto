@@ -1,11 +1,11 @@
-**Specifikacija projekta: E-commerce platforma s FaunaDB i CockroachDB**
+**Specifikacija projekta: E-commerce platforma s PostgreSQL i MongoDB**
 
 **1. Opis projekta**
 Ovaj projekt je akademska implementacija e-commerce platforme koja koristi dvije baze podataka:
-- **MongoDB** za pohranu kataloga proizvoda s fleksibilnim atributima.
--**PostgreSQL** za upravljanje narudžbama i plaćanjima uz osiguranje ACID svojstava i snažne SQL upite.
+- **PostgreSQL** za upravljanje narudžbama, korisnicima, košaricama, stavkama košarica, proizvodima i listama želja uz osiguranje ACID svojstava i snažne SQL upite.
+- **MongoDB** za pohranu kataloga proizvoda s fleksibilnim atributima i korisničkih profila za sustav preporuka.
 
-Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specijalizirane za različite vrste podataka i transakcijskih zahtjeva.
+Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specijalizirane za različite vrste podataka i transakcijskih zahtjeva, uključujući implementaciju preporučiteljskog sustava.
 
 ---
 
@@ -13,38 +13,20 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
 ---
 
 **3. Arhitektura sustava**
-  1. Korisnici (users)
-
-  2. Proizvodi (products)
-
-  3. Kategorije proizvoda (kategorije_proizvoda)
-
-  4. Atributi proizvoda (atributi_proizvoda)
-
-  5. Vrijednosti atributa (vrijednosti_atributa)
-
-  6. Košarice (kosarice)
-
-  7. Stavke košarice (stavke_kosarice)
-  
-  8. Narudžbe (narudzbe)
-
-  9. Stavke narudžbe (stavke_narudzbe)
-    
-  10. Plaćanja (placanja)
-
-  11. Povrati (povrati)
-
-  12. Lista želja (wishlist)
-
-  13. Recenzije (recenzije)
+  1. Korisnici (users) - PostgreSQL
+  2. Proizvodi (products) - PostgreSQL (izvorni podaci), MongoDB (migrirani podaci, uključujući kategorije i metadata za preporuke)
+  3. Košarice (carts) - PostgreSQL
+  4. Stavke košarice (cart_items) - PostgreSQL
+  5. Narudžbe (orders) - PostgreSQL
+  6. Stavke narudžbe (order_items) - PostgreSQL
+  7. Lista želja (wishlist) - PostgreSQL
 
 
   **ideja - osnovne tablice**
 
     Korisnici: Tablica pohranjuje osnovne podatke o korisnicima, uključujući jedinstveni identifikator, ime, prezime, email adresu, lozinku, ulogu (kupac ili administrator) te datum registracije.
 
-    Proizvodi: Ova tablica sadrži informacije o proizvodima kao što su jedinstveni identifikator, naziv, opis, cijena, količina na skladištu, kategorija proizvoda, fleksibilni atributi (npr. boja, veličina) i datum dodavanja proizvoda u sustav.
+    Proizvodi: Ova tablica u PostgreSQL-u sadrži osnovne informacije o proizvodima. U MongoDB-u, proizvodi se pohranjuju s dodatnim metadata poljima za potrebe preporučiteljskog sustava.
 
     Košarice: Tablica pohranjuje podatke o aktivnim košaricama korisnika, uključujući jedinstveni identifikator košarice, povezanost s korisnikom, datum kreiranja i status košarice (npr. "aktivna" ili "napuštena").
 
@@ -54,7 +36,7 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
 
     Stavke narudžbe: Ovdje se pohranjuju proizvodi unutar narudžbi, sa svim detaljima poput jedinstvenog identifikatora, povezivanja s narudžbom, proizvodima, količinom proizvoda i cijenom proizvoda u trenutku narudžbe.
 
-    Plaćanja: Tablica pohranjuje informacije o plaćanjima koja su izvršena za narudžbe, uključujući iznos plaćanja, datum plaćanja, status plaćanja (npr. "u obradi", "plaćeno", "neuspješno") i povezivanje s narudžbom.
+    Lista želja: Tablica pohranjuje proizvode koje je korisnik dodao na svoju listu želja.
 
 ---
 
@@ -65,90 +47,159 @@ Cilj projekta je demonstrirati prednosti korištenja dvije baze podataka specija
 - **Integracija baza podataka**
   - API koji dohvaća proizvode iz MongoDB
   - API za upravljanje narudžbama i plaćanjima u PostgreSQL
+- **Sustav preporuka (implementiran putem MongoDB)**
+  - Generiranje preporuka na temelju korisničke povijesti kupnji (kolaborativno filtriranje)
+  - Generiranje preporuka na temelju kategorija proizvoda (sadržajno filtriranje)
+  - Ažuriranje korisničkih preferencija i metadata proizvoda nakon kupnje
 
 ---
 
 **5. Model podataka**
-- **MongoDBB (NoSQL, JSON dokumenti)**
-  ```json
-  {
-    "id": "12345",
-    "naziv": "Laptop XYZ",
-    "atributi": {
-      "RAM": "16GB",
-      "Boja": "Crna",
-      "Marka": "BrandX"
-    },
-    "cijena": 1500.00,
-    "kategorija": "Elektronika"
-  }
-  ```
---
-***Gdje koristiti MongoDB tj. NoSQL?***
+- **MongoDB (NoSQL, JSON dokumenti)**
+  Koristi se za pohranu kataloga proizvoda (s fleksibilnim atributima i metadata za preporuke) te za korisničke profile s poviješću kupnji i preferencijama, što je ključno za sustav preporuka.
 
+  **Primjeri MongoDB dokumenata:**
+  *   **Proizvod (products kolekcija):**
+    ```json
+    {
+      "productId": "string (UUID)",
+      "name": "string",
+      "category": "string (mapirano iz PG label)",
+      "price": "number",
+      "description": "string (opcionalno)",
+      "metadata": {
+        "views": "number (default 0)",
+        "purchases": "number (ukupna količina kupljena, ažurira se)"
+      }
+    }
+    ```
+  *   **Korisnički profil (userprofiles kolekcija):**
+    ```json
+    {
+      "userId": "string (UUID)",
+      "purchaseHistory": [
+        {
+          "productId": "string (UUID)",
+          "quantity": "number",
+          "purchaseDate": "Date"
+        }
+      ],
+      "preferences": ["string"], // Kategorije koje korisnik preferira (ažurira se nakon kupnje)
+      "lastUpdated": "Date"
+    }
+    ```
 
-Iako je većina ključnih funkcionalnosti e-commerce sustava (korisnici, narudžbe, plaćanja, košarice) implementirana korištenjem relacijske baze PostgreSQL, projekt uključuje i NoSQL pristup radi prikaza fleksibilnosti u pohrani nestrukturiranih podataka.
+---
+***Gdje koristiti MongoDB?***
 
-Konkretno, MongoDB koristi se za pohranu manje kritičnih, ali korisnički relevantnih podataka, gdje nije potrebna stroga shema ili relacijska konzistencija. Time se pokazuje kako kombinacija relacijske i nestrukturirane baze može ponuditi skalabilno i fleksibilno rješenje.
+Iako je većina ključnih funkcionalnosti e-commerce sustava (korisnici, narudžbe, košarice, stavke košarica, proizvodi, liste želja) implementirana korištenjem relacijske baze PostgreSQL, projekt uključuje i NoSQL pristup radi prikaza fleksibilnosti u pohrani nestrukturiranih podataka i optimizacije za specifične zahtjeve poput preporuka.
 
-Primjeri korištenja NoSQL baze:
+Konkretno, MongoDB koristi se za:
 
---Povijest pregleda proizvoda po korisnicima – služi za preporuke i personalizaciju.
-ada korisnik dodaje novi proizvod u katalog, svi atributi proizvoda mogu biti pohranjeni kao JSON dokument u FaunaDB-u.
-FaunaDB omogućava jednostavnu pohranu dokumenata, gdje atributi mogu biti dodani ili uklonjeni bez potrebe za promjenama u shemi baze podataka.
+*   **Katalog proizvoda**: Pohrana detalja o proizvodima, uključujući fleksibilne atribute (`description`) i metadata (`views`, `purchases`) koji se dinamički ažuriraju. To omogućava jednostavnu pohranu i izmjenu atributa bez potrebe za promjenama u strogoj relacijskoj shemi.
+*   **Korisnički profili za preporuke**: Pohrana agregirane povijesti kupnji (`purchaseHistory`) i preferencija korisnika (`preferences`). Ovi podaci su u optimiziranom formatu za brze upite od strane preporučiteljskog sustava.
 
---Recenzije i komentari korisnika – često sadrže različitu strukturu (npr. ocjena, tekst, slika).
-ongoDB može biti korisna za pohranu recenzija proizvoda. Recenzije su često nestrukturirani podaci (npr. tekst, ocjene) koji se često mijenjaju, a FaunaDB nudi fleksibilnost u pohrani tih podataka bez potrebe za rigidnom shemom.
-Svaka recenzija može biti pohranjena kao dokument, koji uključuje: ID korisnika koji je ostavio recenziju, ID proizvoda ,Ocjenu (npr. 1-5 zvjezdica), Tekstualnu recenziju, Datum objave
-
---Dnevnik aktivnosti korisnika – bilježi događaje poput pretraživanja, klikova, prijava.
-
---Tagiranje i korisnički generirani sadržaj – korisnici mogu dodavati tagove koji se ne uklapaju u klasičnu relacijsku strukturu.
-
---MongoDB može pohranjivati kuponske kodove i promocije. Ovaj tip podataka često se mijenja, a FaunaDB omogućuje brzo dodavanje novih kupona ili promocija bez potrebe za složenim migracijama baze podataka.
-
---Kuponi mogu biti pohranjeni kao dokumenti s atributima poput:Kuponski kod, Popust (npr. 10% ili određeni iznos)
-Datum početka i isteka kupona, Kategorije proizvoda za koje je kupon valjan
-
-Dinamička pitanja/odgovori za proizvod (Q&A sekcija)--možda
-
-
---
+---
 - PostgreSQL (SQL, relacijski model)**
   ```sql
-  CREATE TABLE narudzbe (
-    id UUID PRIMARY KEY,
-    korisnik_id UUID,
-    ukupna_cijena DECIMAL,
-    status VARCHAR(20),
-    datum_kreiranja TIMESTAMP DEFAULT now()
+  CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    role VARCHAR(50) DEFAULT 'customer',
+    created_at TIMESTAMP DEFAULT now()
+  );
+
+  CREATE TABLE products (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL,
+    stock_quantity INT NOT NULL DEFAULT 0,
+    label VARCHAR(255) -- Kategorija proizvoda, mapira se na 'category' u MongoDB
+  );
+
+  CREATE TABLE carts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT now(),
+    active BOOLEAN DEFAULT TRUE
+  );
+
+  CREATE TABLE cart_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cart_id UUID REFERENCES carts(id),
+    product_id UUID, -- Referencira products.id
+    quantity INT NOT NULL,
+    price_at_addition DECIMAL(10, 2) NOT NULL
+  );
+
+  CREATE TABLE orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    total_price DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT now()
   );
   
-  CREATE TABLE stavke_narudzbe (
-    id UUID PRIMARY KEY,
-    narudzba_id UUID REFERENCES narudzbe(id),
-    proizvod_id STRING,
-    kolicina INT,
-    cijena DECIMAL
+  CREATE TABLE order_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID REFERENCES orders(id),
+    product_id UUID, -- Referencira products.id
+    quantity INT NOT NULL,
+    price_at_order DECIMAL(10, 2) NOT NULL
+  );
+
+  CREATE TABLE wishlist (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    product_id UUID REFERENCES products(id),
+    created_at TIMESTAMP DEFAULT now()
   );
   ```
 
 ---
 
 **6. API specifikacija**
-- **GET /proizvodi** – Dohvati sve proizvode 
-- **POST /narudzba** – Kreiraj novu narudžbu u CockroachDB/PostgreSQL
-- **POST /placanje** – Obradi plaćanje (simulacija)
-- **GET /narudzbe/{id}** – Dohvati status narudžbex
+- **Korisnici (users):**
+  - `POST /users/add` – Dodaj novog korisnika
+  - `DELETE /users/:id` – Obriši korisnika po ID-u
+  - `DELETE /users/` – Obriši sve korisnike
+- **Košarice (carts):**
+  - `GET /carts/:user_id` – Dohvati košaricu za korisnika
+  - `POST /carts` – Kreiraj novu košaricu
+  - `PATCH /carts/:user_id/deactivate` – Deaktiviraj košaricu nakon kupnje
+  - `PATCH /carts/:user_id/checkout` – Proces checkouta, kreira narudžbu i deaktivira košaricu
+- **Stavke Košarice (cart-items):**
+  - `POST /cart-items` – Dodaj stavku u košaricu
+  - `PUT /cart-items/:item_id` – Ažuriraj količinu stavke u košarici
+  - `DELETE /cart-items/:item_id` – Obriši stavku iz košarice
+- **Proizvodi (products):**
+  - `GET /products` – Dohvati sve proizvode (iz MongoDB)
+  - `GET /products/:id` – Dohvati proizvod po ID-u (iz MongoDB)
+  - `POST /products` – Dodaj novi proizvod
+  - `PUT /products/:id` – Ažuriraj proizvod
+  - `DELETE /products/:id` – Obriši proizvod
+- **Lista želja (wishlist):**
+  - `GET /wishlist/:user_id` – Dohvati listu želja za korisnika
+  - `POST /wishlist` – Dodaj proizvod u listu želja
+  - `DELETE /wishlist/:user_id/:product_id` – Obriši proizvod iz liste želja
+- **Preporuke (recommendations):**
+  - `GET /recommendations/:user_id` – Dohvati preporuke za korisnika. Podržava query parametre `type` (npr. `collaborative`, `content`, `both`) i `limit`.
+  - `POST /recommendations/:user_id/update` – Ažuriraj korisničke preferencije i metadata proizvoda nakon kupnje (za poboljšanje preporuka).
 
 ---
 
 **7. Testiranje**
-- Jedinično testiranje API-ja (Postman, Jest/PyTest)
-- Integracijsko testiranje baza podataka 
+- Jedinično testiranje API-ja (Postman)
+- Integracijsko testiranje baza podataka
+- Testiranje preporučiteljskog sustava s različitim setovima podataka
 
 ---
 
 **8. Zaključak**
-Ovaj projekt prikazuje kako kombinacija PostgreSQL i MongoDB omogućava skalabilnost, fleksibilnost i sigurnost u e-commerce sustavu. FaunaDB nudi brzu i prilagodljivu pohranu proizvoda, dok CockroachDB osigurava konzistentne i pouzdane transakcije za narudžbe i plaćanja. Projekt je zamišljen kao demonstracija distribuiranih baza podataka u akademske svrhe.
+Ovaj projekt prikazuje kako kombinacija PostgreSQL i MongoDB omogućava skalabilnost, fleksibilnost i sigurnost u e-commerce sustavu. PostgreSQL osigurava konzistentne i pouzdane transakcije za narudžbe i plaćanja, dok MongoDB nudi fleksibilnu pohranu proizvoda i korisničkih profila, omogućavajući učinkovitu implementaciju preporučiteljskog sustma. Projekt je zamišljen kao demonstracija modernih pristupa bazama podataka u akademske svrhe.
 
