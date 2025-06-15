@@ -133,3 +133,30 @@ class RecommendationService {
 }
 
 module.exports = new RecommendationService(); 
+
+/*
+Kako implementirati rekomendacije?
+
+
+
+Logika preporuka (u recommendationService.js):
+Preporučiteljski sustav koristi sljedeće pristupe:
+Kolaborativno filtriranje (getCollaborativeRecommendations):
+Ideja: "Korisnici koji su kupovali slične proizvode vjerojatno imaju slične interese." Sustav pronalazi druge korisnike čija je povijest kupnji slična povijesti kupnji ciljanog korisnika.
+Logika:
+Dohvati profil ciljanog korisnika i profile svih ostalih korisnika iz MongoDB userprofiles kolekcije.
+Za svakog drugog korisnika, izračuna sličnost između njihove povijesti kupnji i povijesti kupnji ciljanog korisnika (calculateSimilarity). Naša implementacija koristi jednostavnu sličnost temeljenu na preklapanju kupljenih proizvoda (Jaccardova sličnost setova proizvoda).
+Sortira korisnike po sličnosti i odabere najsličnije (npr. top 5).
+Pregleda povijest kupnji tih najsličnijih korisnika i skuplja proizvode koje su oni kupili, ali ciljani korisnik nije.
+Dohvati detalje tih proizvoda iz MongoDB products kolekcije i vraća ih kao preporuke.
+Sadržajno filtriranje (getContentBasedRecommendations):
+Ideja: "Korisnik će vjerojatno voljeti proizvode slične onima koje je već volio ili kupio." Sustav preporučuje proizvode na temelju atributa proizvoda koji se podudaraju s interesima korisnika.
+Logika:
+Dohvati profil ciljanog korisnika iz userprofiles.
+Analizira korisnikovu purchaseHistory. Za svaki kupljeni proizvod, dohvaća njegovu kategoriju iz products kolekcije (koristeći getPreferredCategories).
+Broji koliko puta se svaka kategorija pojavljuje u korisnikovoj povijesti kupnji kako bi odredio preferirane kategorije (npr. top 3 kategorije).
+Pretražuje MongoDB products kolekciju za proizvode koji:
+Pripadaju nekoj od korisnikovih preferiranih kategorija.
+Nisu proizvodi koje je korisnik već kupio.
+Sortira te proizvode (npr. po broju kupnji iz metadata) i vraća ih kao preporuke.
+*/

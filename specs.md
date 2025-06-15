@@ -203,3 +203,94 @@ Konkretno, MongoDB koristi se za:
 **8. Zaključak**
 Ovaj projekt prikazuje kako kombinacija PostgreSQL i MongoDB omogućava skalabilnost, fleksibilnost i sigurnost u e-commerce sustavu. PostgreSQL osigurava konzistentne i pouzdane transakcije za narudžbe i plaćanja, dok MongoDB nudi fleksibilnu pohranu proizvoda i korisničkih profila, omogućavajući učinkovitu implementaciju preporučiteljskog sustma. Projekt je zamišljen kao demonstracija modernih pristupa bazama podataka u akademske svrhe.
 
+**9. Upute za pokretanje projekta**
+
+Kako biste pokrenuli i testirali projekt e-commerce platforme, slijedite ove korake:
+
+**9.1. Preduvjeti**
+Prije pokretanja projekta, osigurajte da imate instalirano sljedeće:
+*   **Node.js** i **npm** (Node Package Manager)
+*   **PostgreSQL** baza podataka (lokalno, s pristupom preko `pgAdmin` ili sličnog alata)
+*   **MongoDB** baza podataka (lokalno, s pristupom preko `MongoDB Compass` ili sličnog alata)
+*   **Postman** (ili sličan alat za testiranje API-ja)
+
+**9.2. Kloniranje repozitorija**
+Preuzmite projekt s GitHub-a:
+```bash
+git clone [URL_VAŠEG_REPOZITORIJA]
+cd rinbp25-bhrsto/ecommerce-backend
+```
+
+**9.3. Postavljanje PostgreSQL baze podataka**
+1.  Pokrenite vaš PostgreSQL server.
+2.  Povežite se na PostgreSQL pomoću `pgAdmin` ili drugog SQL klijenta.
+3.  Kreirajte novu bazu podataka, npr. `ecommerce`.
+4.  Izvršite SQL skripte za kreiranje tablica. Možete koristiti SQL definicije iz sekcije **5. Model podataka** u ovom dokumentu za kreiranje `users`, `products`, `carts`, `cart_items`, `orders`, `order_items` i `wishlist` tablica.
+    *Preporučeno:* Nakon kreiranja tablica, dodajte testne podatke (korisnike, proizvode, narudžbe i stavke narudžbi) u PostgreSQL za potrebe testiranja preporučiteljskog sustava. Podaci za tablicu `products` mogu se importirati iz datoteke `skincare_data_with_lowercase_headers.csv`. . Za generiranje UUID-ova koristite `gen_random_uuid()`.
+
+**9.4. Postavljanje MongoDB baze podataka**
+1.  Pokrenite vaš MongoDB server (obično se pokreće automatski nakon instalacije, ili ga možete pokrenuti putem `mongod` naredbe).
+2.  Provjerite da je MongoDB dostupan na `localhost:27017` (možete koristiti `MongoDB Compass` za provjeru veze).
+    *Napomena:* Baza podataka `ecommerce` i kolekcije će se automatski kreirati prilikom prve migracije podataka.
+
+**9.5. Konfiguracija projekta (.env datoteka)**
+1.  U korijenskom direktoriju projekta (`ecommerce-backend`), kreirajte datoteku pod nazivom `.env`.
+2.  U tu datoteku dodajte sljedeće varijable okoline, prilagođavajući ih ako je potrebno:
+```dotenv
+PG_URI=postgresql://postgres:admin123@127.0.0.1:5432/ecommerce
+MONGO_URI=mongodb://localhost:27017/ecommerce
+```
+    *Napomena:* Zamijenite ime  i lozinku s vašim PostgreSQL korisničkim imenom i lozinkom ako su drugačiji.
+
+**9.6. Instalacija ovisnosti**
+U direktoriju `ecommerce-backend`, otvorite terminal i instalirajte sve potrebne Node.js pakete:
+```bash
+npm install
+```
+
+**9.7. Migracija podataka iz PostgreSQL u MongoDB**
+Kada su PostgreSQL i MongoDB postavljeni i `npm install` je završen, migrirajte podatke iz PostgreSQL-a u MongoDB:
+*Ova skripta će kreirati/ažurirati proizvode i korisničke profile s poviješću kupnji u MongoDB-u.*
+```bash
+node server/scripts/migrateToMongo.js
+```
+*Nakon pokretanja, provjerite MongoDB Compass da biste vidjeli popunjene `products` i `userprofiles` kolekcije.*
+
+**9.8. (Opcionalno) Preračunavanje broja kupnji za proizvode**
+Da biste osigurali da je `metadata.purchases` za sve proizvode točno popunjen na temelju povijesnih kupnji:
+```bash
+node server/scripts/recalculatePurchases.js
+```
+*Ovo će ažurirati polje `metadata.purchases` za svaki proizvod u MongoDB-u na temelju ukupne kupljene količine kroz sve narudžbe.*
+
+**9.9. Pokretanje Express.js servera**
+U direktoriju `ecommerce-backend`, pokrenite server:
+```bash
+npm start
+```
+Server bi trebao biti dostupan na `http://localhost:3001`.
+
+**9.10. Testiranje API-ja**
+Koristite Postman ili sličan alat za testiranje API endpointova:
+
+*   **Dohvati preporuke za korisnika (kombinirano filtriranje):**
+    `GET http://localhost:3001/recommendations/[user_id]`
+    (Zamijenite `[user_id]` sa stvarnim ID-em korisnika iz vaše baze)
+
+*   **Dohvati preporuke samo po kategoriji (sadržajno filtriranje):**
+    `GET http://localhost:3001/recommendations/[user_id]?type=content`
+
+*   **Dohvati preporuke samo po sličnim korisnicima (kolaborativno filtriranje):**
+    `GET http://localhost:3001/recommendations/[user_id]?type=collaborative`
+
+*   **Ažuriraj korisničke preference nakon kupnje (POST zahtjev):**
+    `POST http://localhost:3001/recommendations/[user_id]/update`
+    Body (JSON):
+    ```json
+    {
+      "product_id": "[product_id]" 
+    }
+    ```
+
+Sretno testiranje!
+
