@@ -104,60 +104,64 @@ Konkretno, MongoDB koristi se za:
   ```sql
   CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username VARCHAR(255) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    first_name VARCHAR(255),
-    last_name VARCHAR(255),
-    role VARCHAR(50) DEFAULT 'customer',
+    email VARCHAR(150) UNIQUE,
+    password VARCHAR(255),
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
     created_at TIMESTAMP DEFAULT now()
   );
 
   CREATE TABLE products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    price DECIMAL(10, 2) NOT NULL,
-    stock_quantity INT NOT NULL DEFAULT 0,
-    label VARCHAR(255) -- Kategorija proizvoda, mapira se na 'category' u MongoDB
+    label TEXT,
+    brand TEXT,
+    name TEXT,
+    price NUMERIC,
+    rank NUMERIC,
+    ingredients TEXT,
+    combination BOOLEAN,
+    dry BOOLEAN,
+    normal BOOLEAN,
+    oily BOOLEAN,
+    sensitive BOOLEAN
   );
 
   CREATE TABLE carts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id),
-    created_at TIMESTAMP DEFAULT now(),
-    active BOOLEAN DEFAULT TRUE
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT now()
   );
 
   CREATE TABLE cart_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    cart_id UUID REFERENCES carts(id),
-    product_id UUID, -- Referencira products.id
-    quantity INT NOT NULL,
-    price_at_addition DECIMAL(10, 2) NOT NULL
+    cart_id UUID REFERENCES carts(id) ON DELETE CASCADE,
+    product_id UUID REFERENCES products(id),
+    quantity INTEGER NOT NULL,
+    added_at TIMESTAMP DEFAULT now()
   );
 
   CREATE TABLE orders (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id),
-    total_price DECIMAL(10, 2) NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT now()
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),                                                  
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT now(),
+    status TEXT CHECK (status IN ('pending', 'paid', 'shipped', 'cancelled')) DEFAULT 'pending',
+    total_price NUMERIC
   );
   
   CREATE TABLE order_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id UUID REFERENCES orders(id),
-    product_id UUID, -- Referencira products.id
-    quantity INT NOT NULL,
-    price_at_order DECIMAL(10, 2) NOT NULL
+    order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+    product_id UUID REFERENCES products(id),
+    quantity INTEGER NOT NULL,
+    price_at_order NUMERIC
   );
 
   CREATE TABLE wishlist (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id),
-    product_id UUID REFERENCES products(id),
-    created_at TIMESTAMP DEFAULT now()
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    product_id UUID REFERENCES products(id) ON DELETE CASCADE, -- Dodano ON DELETE CASCADE
+    added_at TIMESTAMP DEFAULT now()
   );
   ```
 
